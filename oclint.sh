@@ -55,12 +55,18 @@ fi
 
 status "pending" "Running $OCLINT with args ${ARGS[*]} $FILES"
 
-LOG=/tmp/oclint.log
-$OCLINT ${ARGS[*]} $FILES 2>&1 | tee $LOG
+ERRORS=0
+WARNINGS=0
 
-SUMMARY=`grep "Summary:" $LOG`
-ERRORS=`echo $SUMMARY | cut -d ' ' -f4 | cut -d '=' -f2`
-WARNINGS=`echo $SUMMARY | cut -d ' ' -f5 | cut -d '=' -f2`
+if [ "$FILES" != "" ]; then
+  LOG=/tmp/oclint.log
+  $OCLINT ${ARGS[*]} $FILES 2>&1 | tee $LOG
+
+  SUMMARY=`grep "Summary:" $LOG`
+  ERRORS=`echo $SUMMARY | cut -d ' ' -f4 | cut -d '=' -f2`
+  WARNINGS=`echo $SUMMARY | cut -d ' ' -f5 | cut -d '=' -f2`
+fi
+
 DESCRIPTION="Found $ERRORS error`test $ERRORS -eq 1 || echo s` and $WARNINGS warning`test $WARNINGS -eq 1 || echo s`"
 BUGS=$(($ERRORS + $WARNINGS))
 
