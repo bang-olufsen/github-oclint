@@ -7,10 +7,6 @@ set -e
 OCLINT=oclint
 BRANCH=${BRANCH:=develop}
 
-P1=0
-P2=0
-P3=0
-
 status () {
   if [ "$SHIPPABLE" = "true" ]; then
     if [ "$IS_PULL_REQUEST" = "true" ]; then
@@ -59,6 +55,10 @@ fi
 
 status "pending" "Running $OCLINT with args ${ARGS[*]} $FILES"
 
+P1=0
+P2=0
+P3=0
+
 if [ "$FILES" != "" ]; then
   LOG=/tmp/oclint.log
   $OCLINT ${ARGS[*]} $FILES 2>&1 | tee $LOG
@@ -72,7 +72,7 @@ fi
 BUGS=$(($P1 + $P2 + $P3))
 DESCRIPTION="Found $P1 P1, $P2 P2 and $P3 P3 violations"
 
-if [ $P1 -eq 0 ] && [ $P2 -eq 0 ] && [ $P3 -eq 0 ]; then
+if [ $BUGS -eq 0 ]; then
   status "success" "$DESCRIPTION"
 else
   status "failure" "$DESCRIPTION"
