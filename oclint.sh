@@ -7,6 +7,10 @@ set -e
 OCLINT=oclint
 BRANCH=${BRANCH:=develop}
 
+P1=0
+P2=0
+P3=0
+
 status () {
   if [ "$SHIPPABLE" = "true" ]; then
     if [ "$IS_PULL_REQUEST" = "true" ]; then
@@ -23,9 +27,9 @@ status () {
     # Only update coverage badge if we are analyzing all files
     if [ "$FILES" = "." ] && [ "$1" != "pending" ]; then
       BADGE_COLOR=red
-      if [ $ERRORS -eq 0 ]; then
+      if [ $P1 -eq 0 ]; then
         BADGE_COLOR=yellow
-        if [ $WARNINGS -eq 0 ]; then
+        if [ $P2 -eq 0 ] && [ $P3 -eq 0 ]; then
           BADGE_COLOR=brightgreen
         fi
       fi
@@ -55,22 +59,20 @@ fi
 
 status "pending" "Running $OCLINT with args ${ARGS[*]} $FILES"
 
-ERRORS=0
-WARNINGS=0
-
 if [ "$FILES" != "" ]; then
   LOG=/tmp/oclint.log
   $OCLINT ${ARGS[*]} $FILES 2>&1 | tee $LOG
 
   SUMMARY=`grep "Summary:" $LOG`
-  ERRORS=`echo $SUMMARY | cut -d ' ' -f4 | cut -d '=' -f2`
-  WARNINGS=`echo $SUMMARY | cut -d ' ' -f5 | cut -d '=' -f2`
+  P1=`echo $SUMMARY | cut -d ' ' -f4 | cut -d '=' -f2`
+  P2=`echo $SUMMARY | cut -d ' ' -f5 | cut -d '=' -f2`
+  P3=`echo $SUMMARY | cut -d ' ' -f6 | cut -d '=' -f2`
 fi
 
-DESCRIPTION="Found $ERRORS error`test $ERRORS -eq 1 || echo s` and $WARNINGS warning`test $WARNINGS -eq 1 || echo s`"
-BUGS=$(($ERRORS + $WARNINGS))
+BUGS=$(($P1 + $P2 + $P3))
+DESCRIPTION="Found $P1 P1, $P2 P2 and $P3 P3 violations"
 
-if [ $ERRORS -eq 0 ] && [ $WARNINGS -eq 0 ]; then
+if [ $P1 -eq 0 ] && [ $P2 -eq 0 ] && [ $P3 -eq 0 ]; then
   status "success" "$DESCRIPTION"
 else
   status "failure" "$DESCRIPTION"
