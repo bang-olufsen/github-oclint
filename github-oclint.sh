@@ -61,7 +61,7 @@ P3=0
 
 if [ "$FILES" != "" ]; then
   status "pending" "Running $OCLINT with args ${ARGS[*]} $FILES"
-  "$OCLINT" "${ARGS[*]}" "$FILES" 2>&1 | tee /tmp/oclint.log
+  "$OCLINT" "${ARGS[*]}" $FILES 2>&1 | tee /tmp/oclint.log
 
   SUMMARY=$(grep "Summary:" /tmp/oclint.log)
   P1=$(echo "$SUMMARY" | cut -d ' ' -f4 | cut -d '=' -f2)
