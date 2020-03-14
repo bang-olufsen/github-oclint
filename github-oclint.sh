@@ -22,7 +22,7 @@ status () {
       DATA="{ \"state\": \"$1\", \"description\": \"$DESCRIPTION\", \"context\": \"github / oclint\"}"
       PULL_REQUEST_STATUS=$(curl -s -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" -H "User-Agent: $REPO_FULL_NAME" -X GET "https://api.github.com/repos/$REPO_FULL_NAME/pulls/$PULL_REQUEST")
       STATUSES_URL=$(echo "$PULL_REQUEST_STATUS" | jq -r '.statuses_url')
-      curl -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" -H "User-Agent: $REPO_FULL_NAME" -X POST -d "$DATA" "$STATUSES_URL" 1>/dev/null 2>&1
+      curl -s -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" -H "User-Agent: $REPO_FULL_NAME" -X POST -d "$DATA" "$STATUSES_URL" 1>/dev/null
     fi
 
     if [ "$FILES" = "." ] && [ "$1" != "pending" ]; then
@@ -36,11 +36,11 @@ status () {
 
       BADGE_TEXT=$BUGS"_bug"$(test "$BUGS" -eq 1 || echo s)
       wget -O /tmp/oclint_"${REPO_NAME}"_"${BRANCH}".svg https://img.shields.io/badge/oclint-"$BADGE_TEXT"-"$BADGE_COLOR".svg 1>/dev/null 2>&1
-      curl -X POST "https://api-content.dropbox.com/2/files/upload" \
+      curl -s -X POST "https://api-content.dropbox.com/2/files/upload" \
         -H "Authorization: Bearer $DROPBOX_TOKEN" \
         -H "Content-Type: application/octet-stream" \
         -H "Dropbox-API-Arg: {\"path\": \"/oclint_${REPO_NAME}_${BRANCH}.svg\", \"mode\": \"overwrite\"}" \
-        --data-binary @/tmp/oclint_"${REPO_NAME}"_"${BRANCH}".svg 1>/dev/null 2>&1
+        --data-binary @/tmp/oclint_"${REPO_NAME}"_"${BRANCH}".svg 1>/dev/null
     fi
   fi
 
@@ -61,8 +61,9 @@ P1=0
 P2=0
 P3=0
 
+status "pending" "Running $OCLINT with args ${ARGS[*]} $FILES"
+
 if [ "$FILES" != "" ]; then
-  status "pending" "Running $OCLINT with args ${ARGS[*]} $FILES"
   "$OCLINT" "${ARGS[*]}" $FILES 2>&1 | tee /tmp/oclint.log
 
   SUMMARY=$(grep "Summary:" /tmp/oclint.log)
